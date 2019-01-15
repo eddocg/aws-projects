@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<bp:blueprint xmlns="http://camel.apache.org/schema/blueprint"
+	xmlns:bp="http://www.osgi.org/xmlns/blueprint/v1.0.0" xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+      http://camel.apache.org/schema/blueprint
+         http://camel.apache.org/schema/blueprint/camel-blueprint-2.16.4.xsd
+      http://www.osgi.org/xmlns/blueprint/v1.0.0
+         https://osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+      http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0
+         http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
+      ">
+
+	<!-- NOTE: persistent-id MUST NOT contain hyphens! -->
+	<cm:property-placeholder id="camel-sqs-consumer-property-placeholder"
+		persistent-id="com.eddocg.aws.sqs.camel.consumer" placeholder-prefix="$["
+		placeholder-suffix="]" update-strategy="reload">
+		<cm:default-properties>
+
+			<cm:property name="camelTracer.enabled" value="false" />
+			<cm:property name="CamelLogDebugBodyMaxChars" value="-1" />
+
+		</cm:default-properties>
+	</cm:property-placeholder>
+
+	
+	<!-- if NOT using a Jetty HTTPS in.endpoint -->
+	<camelContext id="camel-sqs-consumer" 
+		streamCache="false" trace="{{camelTracer.enabled}}"
+		useBlueprintPropertyResolver="true">
+
+		<properties>
+			<property key="CamelLogDebugBodyMaxChars" value="{{CamelLogDebugBodyMaxChars}}" />
+		</properties>
+
+		<!-- requires patched camel-blueprint; see CAMEL-10038 -->
+		<propertyPlaceholder id="camel-sqs-consumer-propertyPlaceholder"
+			location="blueprint:camel-sqs-consumer-property-placeholder"
+			fallbackToUnaugmentedProperty="true" propertyPrefix="${com.eddocg.smx.node}." />
+
+
+		<route id="01_consume">
+			<!--from uri="{{in.endpoint}}" /-->
+			<from uri="aws-sqs://{{queue.url}}?queueOwnerAWSAccountId={{amazon.sqs.queueOwner}}&amp;accessKey={{amazon.sqs.accessKey}}&amp;secretKey={{amazon.sqs.secretKey}}&amp;region={{amazon.sqs.region}}&amp;deleteAfterRead={{amazon.sqs.deleteAfterRead}}&amp;concurrentConsumers={{amazon.sqs.concurrentConsumers}}&amp;maxMessagesPerPoll=1"/> 
+			<!--log message="Got from SQS Messaging Queue: ${body}" /-->
+           
+			<convertBodyTo type="java.lang.String" charset="UTF-8" />
+
+
+			<log logName="com.eddocg.aws.sqs.camel.consumer" loggingLevel="INFO"
+				message="${camelId} ${routeId} body:\n${body}" />
+				
+		</route>
+
+	</camelContext>
+
+</bp:blueprint>
