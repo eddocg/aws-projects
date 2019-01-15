@@ -16,7 +16,7 @@
 		<slf4j-version>1.6.6</slf4j-version>
 		<log4j-version>1.2.17</log4j-version>
 		
-		<camel.version>2.16.5</camel.version>
+		<camel.version>2.17.6</camel.version>
 	</properties>
 
   <dependencyManagement>
